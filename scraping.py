@@ -22,32 +22,67 @@ from bs4 import BeautifulSoup as soup
 from webdriver_manager.chrome import ChromeDriverManager
 
 import pandas as pd
+import datetime as dt
 
-executable_path = {'executable_path': ChromeDriverManager().install()}
-browser = Browser('chrome', **executable_path, headless=False)
+# 10.5.3 Integrate MongoDB Into the Web App
+#Initialize the browser.
+#Create a data dictionary.
+#End the WebDriver and return the scraped data.
 
-# assign the url and instruct the browser to visit it
-# Visit the mars nasa news site
-url = 'https://redplanetscience.com'
-browser.visit(url)
-# Optional delay for loading the page
-browser.is_element_present_by_css('div.list_text', wait_time=1)
+# define this function as "scrape_all" and then initiate the browser
+def scrape_all():
+    # 10.3.6 Export to Python & clean code
+    # Initiate headless driver for deployment
+    executable_path = {'executable_path': ChromeDriverManager().install()}
+    browser = Browser('chrome', **executable_path, headless=True)
+    
+    # set our news title and paragraph variables
+    news_title, news_paragraph = mars_news(browser)
+    
+    # Run all scraping functions and store results in dictionary
+    data = {
+          "news_title": news_title,
+          "news_paragraph": news_paragraph,
+          "featured_image": featured_image(browser),
+          "facts": mars_facts(),
+          "last_modified": dt.datetime.now()
+    }
+    
+    # Stop webdriver and return data
+    browser.quit()
+    return data
+    
+ 
+# 10.5.2 Defining functions in the previous code
+def mars_news(browser):
+    
+    # assign the url and instruct the browser to visit it
+    # Visit the mars nasa news site
+    url = 'https://redplanetscience.com'
+    browser.visit(url)
+    # Optional delay for loading the page
+    browser.is_element_present_by_css('div.list_text', wait_time=1)
 
-# set up the HTML parser
-html = browser.html
-news_soup = soup(html, 'html.parser')
-slide_elem = news_soup.select_one('div.list_text')
+    # set up the HTML parser
+    html = browser.html
+    news_soup = soup(html, 'html.parser')
+    slide_elem = news_soup.select_one('div.list_text')
+    
+    # Add try/except for error handling
+    try:
+        # assign the title and summary text to variables we'll reference later
+        slide_elem.find('div', class_='content_title')
 
-# assign the title and summary text to variables we'll reference later
-slide_elem.find('div', class_='content_title')
+        # Use the parent element to find the first `a` tag and save it as `news_title`
+        news_title = slide_elem.find('div', class_='content_title').get_text()
 
-# Use the parent element to find the first `a` tag and save it as `news_title`
-news_title = slide_elem.find('div', class_='content_title').get_text()
-news_title
-
-# Use the parent element to find the paragraph text
-news_p = slide_elem.find('div', class_='article_teaser_body').get_text()
-news_p
+        # Use the parent element to find the paragraph text
+        news_p = slide_elem.find('div', class_='article_teaser_body').get_text()
+        
+    except AttributeError:
+        return None, None
+        
+    return news_title, news_p
 
 # # 10.3.4 Scrape Mars Data: Featured Image
 # The next step is to scrape the featured image from another Mars website. Once the image is scraped, we'll want to add it to our web app as well.
@@ -74,28 +109,35 @@ news_p
 #     
 # look at our address bar in the webpage, we can see the entire URL up there already
 
-# set up the URL
-# Visit URL
-url = 'https://spaceimages-mars.com'
-browser.visit(url)
+def featured_image(browser):
 
-# Find and click the full image button
-full_image_elem = browser.find_by_tag('button')[1]
-full_image_elem.click()
+    # set up the URL
+    # Visit URL
+    url = 'https://spaceimages-mars.com'
+    browser.visit(url)
 
-# new page loaded onto our automated browser needs to be parsed to scrape the full-size image URL
-# Parse the resulting html with soup
-html = browser.html
-img_soup = soup(html, 'html.parser')
+    # Find and click the full image button
+    full_image_elem = browser.find_by_tag('button')[1]
+    full_image_elem.click()
 
-# Find the relative image url
-img_url_rel = img_soup.find('img', class_='fancybox-image').get('src')
-img_url_rel
+    # new page loaded onto our automated browser needs to be parsed to scrape the full-size image URL
+    # Parse the resulting html with soup
+    html = browser.html
+    img_soup = soup(html, 'html.parser')
+    
+    # Add try/except for error handling
+    try:
+        # Find the relative image url
+        img_url_rel = img_soup.find('img', class_='fancybox-image').get('src')
+    
+    except AttributeError:
+        return None
 
-# add the base URL to our code.
-# Use the base URL to create an absolute URL
-img_url = f'https://spaceimages-mars.com/{img_url_rel}'
-img_url
+    # add the base URL to our code.
+    # Use the base URL to create an absolute URL
+    img_url = f'https://spaceimages-mars.com/{img_url_rel}'
+    
+    return img_url_rel, img_url
 
 # # 10.3.5 Scrape Mars Data: Mars Facts
 # collection of Mars facts. With news articles and high-quality images, a collection of facts
@@ -111,16 +153,26 @@ img_url
 # that we've gathered everything on Robin's list, we can end the automated browsing session. This is an important line to add to our web app also. Without it, the automated browser won't know to shut down—it will continue to listen for instructions and use the computer's resources (it may put a strain on memory or a laptop's battery if left on). We really only want the automated browser to remain active while we're scraping data.
 # add browser.quit() and execute that cell to end the session.
 
-# scrape the entire table with Pandas into a dataframe
-df = pd.read_html('https://galaxyfacts-mars.com')[0]
-df.columns=['description', 'Mars', 'Earth']
-df.set_index('description', inplace=True)
-df
+def mars_facts():
+    # Add try/except for error handling
+    try:
+        # scrape the entire table with Pandas into a dataframe
+        df = pd.read_html('https://galaxyfacts-mars.com')[0]
+        
+    except BaseException:
+        return None
+        
+    # Assign columns and set index of dataframe
+    df.columns=['description', 'Mars', 'Earth']
+    df.set_index('description', inplace=True)
+            
+    # Convert dataframe into HTML format, add bootstrap
+    return df.to_html()
 
-df.to_html()
+if __name__ == "__main__":
 
-# to end the session
-browser.quit()
+    # If running as script, print scraped data
+    print(scrape_all())
 
 # # IMPORTANT
 # Live sites are a great resource for fresh data, but the layout of the site may be updated or otherwise changed. When this happens, there's a good chance your scraping code will break and need to be reviewed and updated to be used again.
