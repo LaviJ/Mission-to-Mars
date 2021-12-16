@@ -14,13 +14,16 @@ def scrape_all():
 
     news_title, news_paragraph = mars_news(browser)
 
+    hemi_urls = scrape_hemisphere(browser)
+
     # Run all scraping functions and store results in a dictionary
     data = {
         "news_title": news_title,
         "news_paragraph": news_paragraph,
         "featured_image": featured_image(browser),
         "facts": mars_facts(),
-        "last_modified": dt.datetime.now()
+        "last_modified": dt.datetime.now(),
+        "hemi_urls": hemi_urls
     }
 
     # Stop webdriver and return data
@@ -98,7 +101,42 @@ def mars_facts():
     # Convert dataframe into HTML format, add bootstrap
     return df.to_html(classes="table table-striped")
 
-if __name__ == "__main__":
+def scrape_hemisphere(browser):
+    hemisphere_image_urls = []
+    try:
+        url = 'https://marshemispheres.com/'
+        browser.visit(url)
+        # 2. Create a list to hold the images and titles.
+        links = browser.find_by_css("a.product-item img")
 
+        # 3. Write code to retrieve the image urls and titles for each hemisphere.
+        for i in range(len(links)):
+            hemi = {}
+            # Browse through each article
+            browser.find_by_css("a.product-item img")[i].click()
+            sample = browser.links.find_by_text("Sample").first
+            hemi["hemi_url"] = sample["href"]
+            
+            #Scrapping for the titles
+            hemi["title"] = browser.find_by_css("h2.title").text
+            
+            # Store findings into a dictionary and append to list
+            hemisphere_image_urls.append(hemi)
+            
+            # Browse back to repeat
+            browser.back()    
+       
+        browser.quit() 
+        return hemisphere_image_urls     
+
+    except AttributeError:
+        return hemisphere_image_urls 
+
+   
+if __name__ == "__main__":
     # If running as script, print scraped data
-    print(scrape_all())
+    #print(scrape_all())
+    executable_path = {'executable_path': ChromeDriverManager().install()}
+    browser = Browser('chrome', **executable_path, headless=True)
+    x = scrape_hemisphere(browser)
+    print(x)

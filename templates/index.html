@@ -11,6 +11,9 @@
     />
   </head>
   <body>
+    <style type="text/css">
+      body { background: rgba(247, 220, 196, 0.932) !important; } /* Adding !important forces the browser to overwrite the default style applied by Bootstrap */
+    </style>
     <div class="container">
       <!-- Add Jumbotron to Header -->
       <div class="jumbotron text-center">
@@ -43,12 +46,53 @@
         <div class="col-md-4">
           <!-- Mars Facts -->
           <div class="row" id="mars-facts">
-            <h4>Mars Facts</h4>
-            {{ mars.facts | safe }}
+            <div class="text-center">
+              <h4>Mars Facts</h4>
+            </div>
+            <table class="table table-striped">            
+              {{ mars.facts | safe }}
+            </table>
           </div>
         </div>
       </div>
+      <div class="text-center">
+        <h2>Mars Hemispheres</h2>
+      </div> 
+        <div class="row" id="hemi_urls">          
+          <div class="col-md-3">            
+            <img
+              src="{{mars.hemi_urls[0]['hemi_url'] }}"              
+              class="img-thumbnail"
+              alt="{{mars.hemi_urls[0]['title'] }}"
+            /> 
+            <p><h2>{{mars.hemi_urls[0]['title'] }}</h2></p>   
+          </div>
+          <div class="col-md-3">            
+            <img
+              src="{{mars.hemi_urls[1]['hemi_url'] }}"              
+              class="img-thumbnail"
+              alt="{{mars.hemi_urls[1]['title'] }}"
+            /> 
+            <p><h2>{{mars.hemi_urls[1]['title'] }}</h2></p>   
+          </div>
+          <div class="col-md-3">            
+            <img
+              src="{{mars.hemi_urls[2]['hemi_url'] }}"              
+              class="img-thumbnail"
+              alt="{{mars.hemi_urls[2]['title'] }}"
+            /> 
+            <p><h2>{{mars.hemi_urls[2]['title'] }}</h2></p>   
+          </div>
+          <div class="col-md-3">            
+            <img
+              src="{{mars.hemi_urls[3]['hemi_url'] }}"              
+              class="img-thumbnail"
+              alt="{{mars.hemi_urls[3]['title'] }}"
+            /> 
+            <p><h2>{{mars.hemi_urls[3]['title'] }}</h2></p>   
+          </div>
+        </div>
+      
     </div>
   </body>
 </html>
-IMPORTANT
